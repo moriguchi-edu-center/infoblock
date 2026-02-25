@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>学習内容イラスト（2〜137行目）</title>
+  <style>
+    body { font-family: "Hiragino Sans", "Yu Gothic", sans-serif; background: #eee; padding: 24px; }
+    h1 { font-size: 1.2rem; margin-bottom: 16px; }
+    .card { position: relative; display: inline-block; margin: 16px; vertical-align: top; background: #fff; padding: 12px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+    .card figcaption { margin-top: 8px; font-size: 0.9rem; color: #666; }
+    .img-wrap { position: relative; display: inline-block; line-height: 0; }
+    .img-wrap img { display: block; max-width: 100%; height: auto; max-width: 400px; }
+    .img-wrap img.load-error { min-width: 200px; min-height: 150px; background: #e8e8e8; object-fit: none; }
+    .img-placeholder { display: flex; align-items: center; justify-content: center; min-width: 200px; min-height: 150px; background: #e0e0e0; color: #888; font-size: 0.9rem; text-align: center; padding: 12px; box-sizing: border-box; }
+    .label-overlay {
+      position: absolute;
+      left: 32px;
+      top: 72px;
+      max-width: 70%;
+      color: #000;
+      text-shadow: -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff;
+      font-weight: bold;
+      cursor: move;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Hiragino Maru Gothic ProN", "Hiragino Maru Gothic Pro", "UD Digi Kyokasho", "BIZ UDGothic", "M+ 1p", "Hiragino Sans", "Yu Gothic", sans-serif;
+    }
+    .label-overlay.dragging {
+      cursor: grabbing;
+    }
+    .label-overlay.editing {
+      cursor: text;
+    }
+    .label-overlay .label-text {
+      display: block;
+      min-height: 1.2em;
+      outline: none;
+      user-select: text;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      word-break: break-word;
+      line-height: 1.4;
+    }
+    .size-control { margin-top: 6px; font-size: 0.85rem; }
+    .size-control label { margin-right: 8px; }
+    .size-control input[type="range"] { width: 100px; vertical-align: middle; }
+    .btn-export { margin-top: 6px; padding: 4px 10px; font-size: 0.85rem; cursor: pointer; }
+    .card-ok { position: absolute; top: 8px; right: 8px; z-index: 5; font-size: 0.9rem; background: rgba(255,255,255,.95); padding: 4px 8px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+    .card-ok label { cursor: pointer; user-select: none; }
+    .card-ok input { margin-right: 4px; vertical-align: middle; }
+  </style>
+</head>
+<body>
+  <h1>学習内容イラスト（2行目〜137行目）</h1>
+  <p style="margin-bottom:16px; color:#555;">テーマ文字を直接ドラッグで移動、クリックで編集できます。改行（Enter）にも対応しています。スライダーで大きさを変更できます。</p>
+  <p style="margin-bottom:16px;">
+    <button type="button" id="btn-export-all" class="btn-export" style="padding:8px 16px; font-size:1rem;">すべてのカードをPNGで一括書き出し</button>
+    <button type="button" id="btn-export-checked" class="btn-export" style="padding:8px 16px; font-size:1rem; margin-left:8px;">OKのカードをPNGで一括書き出し</button>
+  </p>
+
+  <div id="cards"></div>
+
+  <script>
+(function() {
+  const DATA = [
+    { row: 2, label: "対象を決める", file: "img/row2_対象を決める.png", char: "リク" },
+    { row: 3, label: "課題の作り方", file: "img/row3_課題の作り方.png", char: "アオイ" },
+    { row: 4, label: "シンキングサイクルの理解", file: "img/row4_シンキングサイクル.png", char: "サクラ" },
+    { row: 5, label: "解決策の立案・仮説", file: "img/row5_解決策の立案・仮説.png", char: "ハルト" },
+    { row: 6, label: "目的（5W1H）", file: "img/row6_目的（5W1H）.png", char: "リク" },
+    { row: 7, label: "問題の整理と分析", file: "img/row7_問題の整理と分析.png", char: "アオイ" },
+    { row: 8, label: "学習の目的の理解", file: "img/row8_学習の目的の理解.png", char: "サクラ" },
+    { row: 9, label: "五感", file: "img/row9_五感.png", char: "ハルト" },
+    { row: 10, label: "比較する（具体物と具体物）", file: "img/row10_比較する（具体物と具体物）.png", char: "リク" },
+    { row: 11, label: "言葉を集める", file: "img/row11_言葉を集める.png", char: "アオイ" },
+    { row: 12, label: "条件制御", file: "img/row12_条件制御.png", char: "サクラ" },
+    { row: 13, label: "比較する（文章と文章）", file: "img/row13_比較する（文章と文章）.png", char: "ハルト" },
+    { row: 14, label: "インタビュー方法", file: "img/row14_インタビュー方法.png", char: "リク" },
+    { row: 15, label: "メモの取り方", file: "img/row15_メモの取り方.png", char: "アオイ" },
+    { row: 16, label: "検索", file: "img/row16_検索.png", char: "サクラ" },
+    { row: 17, label: "惑わされない視点", file: "img/row17_惑わされない視点.png", char: "ハルト" },
+    { row: 18, label: "情報の集め方・見方", file: "img/row18_情報の集め方・見方.png", char: "リク" },
+    { row: 19, label: "計画の具体化", file: "img/row19_計画の具体化.png", char: "アオイ" },
+    { row: 20, label: "アンケート作成", file: "img/row20_アンケート作成.png", char: "サクラ" },
+    { row: 21, label: "アップとルーズ", file: "img/row21_アップとルーズ.png", char: "ハルト" },
+    { row: 22, label: "ピクトグラム", file: "img/row22_ピクトグラム.png", char: "リク" },
+    { row: 23, label: "フォームズ（質問）", file: "img/row23_フォームズ（質問）.png", char: "アオイ" },
+    { row: 24, label: "比較する", file: "img/row24_比較する.png", char: "サクラ" },
+    { row: 25, label: "分類する", file: "img/row25_分類する.png", char: "ハルト" },
+    { row: 26, label: "表や図への整理", file: "img/row26_表や図への整理.png", char: "リク" },
+    { row: 27, label: "言葉を分類する", file: "img/row27_言葉を分類する.png", char: "アオイ" },
+    { row: 28, label: "視点ごと", file: "img/row28_視点ごと.png", char: "サクラ" },
+    { row: 29, label: "事柄の順序", file: "img/row29_事柄の順序.png", char: "ハルト" },
+    { row: 30, label: "KJ法", file: "img/row30_KJ法.png", char: "リク" },
+    { row: 31, label: "ベン図", file: "img/row31_ベン図.png", char: "アオイ" },
+    { row: 32, label: "順序付ける", file: "img/row32_順序付ける.png", char: "サクラ" },
+    { row: 33, label: "グラフへの変換", file: "img/row33_グラフへの変換.png", char: "ハルト" },
+    { row: 34, label: "計画の実行", file: "img/row34_計画の実行.png", char: "リク" },
+    { row: 35, label: "構造化", file: "img/row35_構造化.png", char: "アオイ" },
+    { row: 36, label: "主張・考え・事実", file: "img/row36_主張・考え・事実.png", char: "サクラ" },
+    { row: 37, label: "理由づけ", file: "img/row37_理由づけ.png", char: "ハルト" },
+    { row: 38, label: "表計算ソフトの関数（Sum、Average）", file: "img/row38_表計算ソフトの関数（Sum、Average）.png", char: "リク" },
+    { row: 39, label: "多面的・多角的", file: "img/row39_多面的・多角的.png", char: "アオイ" },
+    { row: 40, label: "広げる", file: "img/row40_広げる.png", char: "サクラ" },
+    { row: 41, label: "関係づける", file: "img/row41_関係づける.png", char: "ハルト" },
+    { row: 42, label: "問題解決の振り返り", file: "img/row42_問題解決の振り返り.png", char: "リク" },
+    { row: 43, label: "プレゼンテーション", file: "img/row43_プレゼンテーション.png", char: "アオイ" },
+    { row: 44, label: "相互評価", file: "img/row44_相互評価.png", char: "サクラ" },
+    { row: 45, label: "自己評価", file: "img/row45_自己評価.png", char: "ハルト" },
+    { row: 46, label: "レポート", file: "img/row46_レポート.png", char: "リク" },
+    { row: 47, label: "計画結果の評価", file: "img/row47_計画結果の評価.png", char: "アオイ" },
+    { row: 48, label: "探究", file: "img/row48_探究.png", char: "サクラ" },
+    { row: 49, label: "見出し・図表・文字サイズ", file: "img/row49_見出し・図表・文字サイズ.png", char: "ハルト" },
+    { row: 50, label: "箇条書き", file: "img/row50_箇条書き.png", char: "リク" },
+    { row: 51, label: "レイアウト", file: "img/row51_レイアウト.png", char: "アオイ" },
+    { row: 52, label: "電源ON", file: "img/row52_電源ON.png", char: "サクラ" },
+    { row: 53, label: "パスワード入力", file: "img/row53_パスワード入力.png", char: "ハルト" },
+    { row: 54, label: "ログイン", file: "img/row54_ログイン.png", char: "リク" },
+    { row: 55, label: "写真撮影", file: "img/row55_写真撮影.png", char: "アオイ" },
+    { row: 56, label: "課題提出", file: "img/row56_課題提出.png", char: "サクラ" },
+    { row: 57, label: "画面タッチ", file: "img/row57_画面タッチ.png", char: "ハルト" },
+    { row: 58, label: "タッチペン", file: "img/row58_タッチペン.png", char: "リク" },
+    { row: 59, label: "静止画閲覧", file: "img/row59_静止画閲覧.png", char: "アオイ" },
+    { row: 60, label: "動画撮影", file: "img/row60_動画撮影.png", char: "サクラ" },
+    { row: 61, label: "プログラミング", file: "img/row61_プログラミング.png", char: "ハルト" },
+    { row: 62, label: "ドラッグ＆ドロップ", file: "img/row62_ドラッグ＆ドロップ.png", char: "リク" },
+    { row: 63, label: "キーボード入力", file: "img/row63_キーボード入力.png", char: "アオイ" },
+    { row: 64, label: "ファイル", file: "img/row64_ファイル.png", char: "サクラ" },
+    { row: 65, label: "画像の削除", file: "img/row65_画像の削除.png", char: "ハルト" },
+    { row: 66, label: "スライドの基本操作", file: "img/row66_スライドの基本操作.png", char: "リク" },
+    { row: 67, label: "写真挿入", file: "img/row67_写真挿入.png", char: "アオイ" },
+    { row: 68, label: "ホームポジション", file: "img/row68_ホームポジション.png", char: "サクラ" },
+    { row: 69, label: "動画視聴", file: "img/row69_動画視聴.png", char: "ハルト" },
+    { row: 70, label: "リンク共有", file: "img/row70_リンク共有.png", char: "リク" },
+    { row: 71, label: "スクリーンショット", file: "img/row71_スクリーンショット.png", char: "アオイ" },
+    { row: 72, label: "コピー＆ペースト", file: "img/row72_コピー＆ペースト.png", char: "サクラ" },
+    { row: 73, label: "プレゼンテーションモード", file: "img/row73_プレゼンテーションモード.png", char: "ハルト" },
+    { row: 74, label: "テキストボックス", file: "img/row74_テキストボックス.png", char: "リク" },
+    { row: 75, label: "2次元コード読み取り", file: "img/row75_2次元コード読み取り.png", char: "アオイ" },
+    { row: 76, label: "OneDriveへのアクセス", file: "img/row76_OneDriveへのアクセス.png", char: "サクラ" },
+    { row: 77, label: "タイピング", file: "img/row77_タイピング.png", char: "ハルト" },
+    { row: 78, label: "Excel入力", file: "img/row78_Excel入力.png", char: "リク" },
+    { row: 79, label: "インターネット検索", file: "img/row79_インターネット検索.png", char: "アオイ" },
+    { row: 80, label: "インターネット閲覧", file: "img/row80_インターネット閲覧.png", char: "サクラ" },
+    { row: 81, label: "チャット", file: "img/row81_チャット.png", char: "ハルト" },
+    { row: 82, label: "チャット（コメント）", file: "img/row82_チャット（コメント）.png", char: "リク" },
+    { row: 83, label: "スライド作成", file: "img/row83_スライド作成.png", char: "アオイ" },
+    { row: 84, label: "スライドの共有", file: "img/row84_スライドの共有.png", char: "サクラ" },
+    { row: 85, label: "フォント", file: "img/row85_フォント.png", char: "ハルト" },
+    { row: 86, label: "グリッド線", file: "img/row86_グリッド線.png", char: "リク" },
+    { row: 87, label: "文字数", file: "img/row87_文字数.png", char: "アオイ" },
+    { row: 88, label: "レポート（アウトライン機能）", file: "img/row88_レポート（アウトライン機能）.png", char: "サクラ" },
+    { row: 89, label: "カレンダー", file: "img/row89_カレンダー.png", char: "ハルト" },
+    { row: 90, label: "ToDo", file: "img/row90_ToDo.png", char: "リク" },
+    { row: 91, label: "メモ", file: "img/row91_メモ.png", char: "アオイ" },
+    { row: 92, label: "動画のトリミング", file: "img/row92_動画のトリミング.png", char: "サクラ" },
+    { row: 93, label: "動画のタイトル挿入", file: "img/row93_動画のタイトル挿入.png", char: "ハルト" },
+    { row: 94, label: "個人情報保護", file: "img/row94_個人情報保護.png", char: "リク" },
+    { row: 95, label: "個人情報の取り扱い", file: "img/row95_個人情報の取り扱い.png", char: "アオイ" },
+    { row: 96, label: "肖像権", file: "img/row96_肖像権.png", char: "サクラ" },
+    { row: 97, label: "著作権", file: "img/row97_著作権.png", char: "ハルト" },
+    { row: 98, label: "学習目的での利用", file: "img/row98_学習目的での利用.png", char: "リク" },
+    { row: 99, label: "パソコン利用の目的とルール", file: "img/row99_パソコン利用の目的とルール.png", char: "アオイ" },
+    { row: 100, label: "利用時間", file: "img/row100_利用時間.png", char: "サクラ" },
+    { row: 101, label: "家庭での約束", file: "img/row101_家庭での約束.png", char: "ハルト" },
+    { row: 102, label: "共同編集の留意点", file: "img/row102_共同編集の留意点.png", char: "リク" },
+    { row: 103, label: "出典の明記", file: "img/row103_出典の明記.png", char: "アオイ" },
+    { row: 104, label: "誹謗中傷", file: "img/row104_誹謗中傷.png", char: "サクラ" },
+    { row: 105, label: "引用", file: "img/row105_引用.png", char: "ハルト" },
+    { row: 106, label: "炎上", file: "img/row106_炎上.png", char: "リク" },
+    { row: 107, label: "他者の作品の尊重", file: "img/row107_他者の作品の尊重.png", char: "アオイ" },
+    { row: 108, label: "友だちの発表の尊重", file: "img/row108_友だちの発表の尊重.png", char: "サクラ" },
+    { row: 109, label: "撮影時の注意", file: "img/row109_撮影時の注意.png", char: "ハルト" },
+    { row: 110, label: "相手への伝え方", file: "img/row110_相手への伝え方.png", char: "リク" },
+    { row: 111, label: "送り手の意図", file: "img/row111_送り手の意図.png", char: "アオイ" },
+    { row: 112, label: "受け手の立場", file: "img/row112_受け手の立場.png", char: "サクラ" },
+    { row: 113, label: "詐欺グラフ", file: "img/row113_詐欺グラフ.png", char: "ハルト" },
+    { row: 114, label: "切り取られた情報", file: "img/row114_切り取られた情報.png", char: "リク" },
+    { row: 115, label: "姿勢", file: "img/row115_姿勢.png", char: "アオイ" },
+    { row: 116, label: "視力", file: "img/row116_視力.png", char: "サクラ" },
+    { row: 117, label: "ネット依存", file: "img/row117_ネット依存.png", char: "ハルト" },
+    { row: 118, label: "使い過ぎ", file: "img/row118_使い過ぎ.png", char: "リク" },
+    { row: 119, label: "端末の管理", file: "img/row119_端末の管理.png", char: "アオイ" },
+    { row: 120, label: "IDパスワード", file: "img/row120_IDパスワード.png", char: "サクラ" },
+    { row: 121, label: "フィッシング", file: "img/row121_フィッシング.png", char: "ハルト" },
+    { row: 122, label: "架空請求", file: "img/row122_架空請求.png", char: "リク" },
+    { row: 123, label: "ワンクリック詐欺", file: "img/row123_ワンクリック詐欺.png", char: "アオイ" },
+    { row: 124, label: "フェイクニュース", file: "img/row124_フェイクニュース.png", char: "サクラ" },
+    { row: 125, label: "SNS", file: "img/row125_SNS.png", char: "ハルト" },
+    { row: 126, label: "情報の信憑性", file: "img/row126_情報の信憑性.png", char: "リク" },
+    { row: 127, label: "共同編集の仕組み", file: "img/row127_共同編集の仕組み.png", char: "アオイ" },
+    { row: 128, label: "AIの活用", file: "img/row128_AIの活用.png", char: "サクラ" },
+    { row: 129, label: "AIの特性（画像生成）", file: "img/row129_AIの特性（画像生成）.png", char: "ハルト" },
+    { row: 130, label: "画像認識AI", file: "img/row130_画像認識AI.png", char: "リク" },
+    { row: 131, label: "生成AIの活用", file: "img/row131_生成AIの活用.png", char: "アオイ" },
+    { row: 132, label: "（要設定）", file: "img/row132_要設定.png", char: "サクラ" },
+    { row: 133, label: "カラーユニバーサルデザイン", file: "img/row133_カラーユニバーサルデザイン.png", char: "ハルト" },
+    { row: 134, label: "データの見方（読み取り）", file: "img/row134_データの見方（読み取り）.png", char: "リク" },
+    { row: 135, label: "グラフのつくり方", file: "img/row135_グラフのつくり方.png", char: "アオイ" },
+    { row: 136, label: "（要設定）", file: "img/row136_要設定.png", char: "サクラ" },
+    { row: 137, label: "（要設定）", file: "img/row137_要設定.png", char: "ハルト" },
+  ];
+
+  const cardsEl = document.getElementById("cards");
+  const DEFAULT_FONT_SIZE = 50;
+  const MIN_FONT = 12;
+  const MAX_FONT = 120;
+  const DEFAULT_MAX_WIDTH = 70;
+  const MIN_MAX_WIDTH = 30;
+  const MAX_MAX_WIDTH = 100;
+
+  function makeCard(item) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.dataset.filename = item.file;
+
+    const wrap = document.createElement("figure");
+    wrap.className = "img-wrap";
+
+    const img = document.createElement("img");
+    img.src = item.file;
+    img.alt = item.label;
+    img.width = 400;
+    img.loading = "lazy";
+    img.addEventListener("error", function() {
+      img.classList.add("load-error");
+      const placeholder = document.createElement("div");
+      placeholder.className = "img-placeholder";
+      placeholder.textContent = "画像がありません\n（" + item.file + "）";
+      wrap.insertBefore(placeholder, img);
+      img.style.display = "none";
+      overlay.style.display = "none";
+    });
+
+    const overlay = document.createElement("div");
+    overlay.className = "label-overlay";
+    overlay.style.fontSize = DEFAULT_FONT_SIZE + "px";
+    overlay.style.maxWidth = DEFAULT_MAX_WIDTH + "%";
+    const textEl = document.createElement("span");
+    textEl.className = "label-text";
+    textEl.contentEditable = "true";
+    textEl.textContent = item.label;
+    overlay.appendChild(textEl);
+
+    let drag = null;
+    let dragStartPos = null;
+
+    // テキスト編集モードの切り替え
+    textEl.addEventListener("focus", function() {
+      overlay.classList.add("editing");
+      overlay.classList.remove("dragging");
+    });
+    textEl.addEventListener("blur", function() {
+      overlay.classList.remove("editing");
+    });
+
+    // テキストエリアでのマウスダウン：少し動かしたらドラッグ、動かなければ編集
+    textEl.addEventListener("mousedown", function(e) {
+      const selection = window.getSelection();
+      // テキストが選択されている場合は編集モード（ドラッグしない）
+      if (selection.toString().length > 0) {
+        return;
+      }
+      
+      dragStartPos = { x: e.clientX, y: e.clientY, time: Date.now() };
+      const startLeft = parseInt(overlay.style.left, 10) || 32;
+      const startTop = parseInt(overlay.style.top, 10) || 72;
+      
+      const onMove = function(moveEvent) {
+        const dx = Math.abs(moveEvent.clientX - dragStartPos.x);
+        const dy = Math.abs(moveEvent.clientY - dragStartPos.y);
+        // 5px以上動いたらドラッグモード
+        if (dx > 5 || dy > 5) {
+          e.preventDefault();
+          drag = {
+            startX: dragStartPos.x,
+            startY: dragStartPos.y,
+            left: startLeft,
+            top: startTop
+          };
+          overlay.classList.add("dragging");
+          overlay.classList.remove("editing");
+          textEl.blur();
+          document.removeEventListener("mousemove", onMove);
+          document.removeEventListener("mouseup", onUp);
+        }
+      };
+      
+      const onUp = function() {
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+        if (!drag) {
+          // 動いていなければ編集モード
+          setTimeout(function() {
+            textEl.focus();
+            const range = document.createRange();
+            range.selectNodeContents(textEl);
+            range.collapse(false);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }, 10);
+        }
+        dragStartPos = null;
+      };
+      
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    });
+
+    // ドラッグ中
+    document.addEventListener("mousemove", function(e) {
+      if (!drag) return;
+      const dx = e.clientX - drag.startX, dy = e.clientY - drag.startY;
+      const imgRect = wrap.getBoundingClientRect();
+      const maxLeft = imgRect.width - overlay.offsetWidth;
+      const maxTop = imgRect.height - overlay.offsetHeight;
+      overlay.style.left = Math.max(0, Math.min(maxLeft, drag.left + dx)) + "px";
+      overlay.style.top = Math.max(0, Math.min(maxTop, drag.top + dy)) + "px";
+    });
+
+    // ドラッグ終了
+    document.addEventListener("mouseup", function() {
+      if (drag) {
+        drag = null;
+        overlay.classList.remove("dragging");
+      }
+    });
+
+    const sizeControl = document.createElement("div");
+    sizeControl.className = "size-control";
+    sizeControl.innerHTML = '<label>文字サイズ</label><input type="range" min="' + MIN_FONT + '" max="' + MAX_FONT + '" value="' + DEFAULT_FONT_SIZE + '">';
+    const range = sizeControl.querySelector('input[type="range"]');
+    range.addEventListener("input", function() {
+      overlay.style.fontSize = this.value + "px";
+    });
+
+    const widthControl = document.createElement("div");
+    widthControl.className = "size-control";
+    widthControl.innerHTML = '<label>折り返し幅</label><input type="range" min="' + MIN_MAX_WIDTH + '" max="' + MAX_MAX_WIDTH + '" value="' + DEFAULT_MAX_WIDTH + '">';
+    const widthRange = widthControl.querySelector('input[type="range"]');
+    widthRange.addEventListener("input", function() {
+      overlay.style.maxWidth = this.value + "%";
+    });
+
+    const okWrap = document.createElement("div");
+    okWrap.className = "card-ok";
+    const okLabel = document.createElement("label");
+    const okCheck = document.createElement("input");
+    okCheck.type = "checkbox";
+    okCheck.className = "card-ok-check";
+    okLabel.appendChild(okCheck);
+    okLabel.appendChild(document.createTextNode(" OK"));
+    okWrap.appendChild(okLabel);
+
+    const cap = document.createElement("figcaption");
+    cap.textContent = item.row + " 行目（" + item.char + "）";
+
+    const btnExport = document.createElement("button");
+    btnExport.className = "btn-export";
+    btnExport.textContent = "PNGで書き出し";
+    btnExport.addEventListener("click", function() {
+      exportCard(card);
+    });
+
+    wrap.appendChild(img);
+    wrap.appendChild(overlay);
+    card.appendChild(okWrap);
+    card.appendChild(wrap);
+    card.appendChild(sizeControl);
+    card.appendChild(widthControl);
+    card.appendChild(cap);
+    card.appendChild(btnExport);
+    cardsEl.appendChild(card);
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function exportCard(cardEl) {
+    const imgEl = cardEl.querySelector("img");
+    const overlay = cardEl.querySelector(".label-overlay");
+    if (!imgEl || !imgEl.complete || imgEl.naturalWidth === 0) {
+      alert("画像の読み込みが完了してから書き出してください。");
+      return;
+    }
+    const textEl = overlay.querySelector(".label-text");
+    const text = (textEl && textEl.textContent) || "タイトル";
+    const fontSize = parseInt(overlay.style.fontSize, 10) || DEFAULT_FONT_SIZE;
+    const left = parseInt(overlay.style.left, 10) || 32;
+    const top = parseInt(overlay.style.top, 10) || 72;
+    const maxWidth = parseFloat(overlay.style.maxWidth) || 70;
+    const imgRect = cardEl.querySelector(".img-wrap").getBoundingClientRect();
+    const textMaxWidth = (imgRect.width * maxWidth / 100);
+
+    const scale = imgEl.naturalWidth / imgEl.width;
+    const c = document.createElement("canvas");
+    c.width = imgEl.naturalWidth;
+    c.height = imgEl.naturalHeight;
+    const ctx = c.getContext("2d");
+    ctx.drawImage(imgEl, 0, 0);
+    
+    // UDフォントで描画
+    const scaledFontSize = Math.round(fontSize * scale);
+    ctx.font = "bold " + scaledFontSize + "px \"Hiragino Maru Gothic ProN\", \"Hiragino Maru Gothic Pro\", \"UD Digi Kyokasho\", \"BIZ UDGothic\", \"M+ 1p\", \"Hiragino Sans\", \"Yu Gothic\", sans-serif";
+    ctx.fillStyle = "#000";
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = Math.max(2, Math.round(scaledFontSize / 12));
+    ctx.textBaseline = "top";
+    ctx.textAlign = "left";
+    
+    // 改行対応：テキストを行ごとに分割して描画
+    const lines = text.split("\n");
+    const lineHeight = scaledFontSize * 1.4;
+    const scaledLeft = left * scale;
+    const scaledTop = top * scale;
+    const scaledMaxWidth = textMaxWidth * scale;
+    let currentY = scaledTop;
+    
+    lines.forEach(function(line) {
+      if (line.trim() === "") {
+        currentY += lineHeight; // 空行は高さだけ進める
+        return;
+      }
+      
+      // 長い行は自動改行（文字単位で分割）
+      let currentLine = "";
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const testLine = currentLine + char;
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > scaledMaxWidth && currentLine.length > 0) {
+          // 現在の行を描画
+          ctx.strokeText(currentLine, scaledLeft, currentY);
+          ctx.fillText(currentLine, scaledLeft, currentY);
+          currentLine = char;
+          currentY += lineHeight;
+        } else {
+          currentLine = testLine;
+        }
+      }
+      // 残りの行を描画
+      if (currentLine) {
+        ctx.strokeText(currentLine, scaledLeft, currentY);
+        ctx.fillText(currentLine, scaledLeft, currentY);
+        currentY += lineHeight;
+      }
+    });
+
+    const a = document.createElement("a");
+    a.download = (cardEl.dataset.filename || "illust.png").split("/").pop();
+    a.href = c.toDataURL("image/png");
+    a.click();
+  }
+
+  DATA.forEach(makeCard);
+
+  function exportCardsInSequence(cards) {
+    if (cards.length === 0) return;
+    let done = 0;
+    let failed = 0;
+    const total = cards.length;
+    const delayMs = 400;
+
+    function exportNext(index) {
+      if (index >= total) {
+        const msg = failed === 0
+          ? done + " 枚のカードを書き出しました。"
+          : done + " 枚を書き出し、" + failed + " 枚は画像未読み込みのためスキップしました。";
+        alert(msg);
+        return;
+      }
+      const card = cards[index];
+      const imgEl = card.querySelector("img");
+      if (!imgEl || !imgEl.complete || imgEl.naturalWidth === 0) {
+        failed++;
+        setTimeout(function() { exportNext(index + 1); }, 0);
+        return;
+      }
+      exportCard(card);
+      done++;
+      setTimeout(function() { exportNext(index + 1); }, delayMs);
+    }
+    exportNext(0);
+  }
+
+  // すべてのカードを一括書き出し
+  document.getElementById("btn-export-all").addEventListener("click", function() {
+    const cards = Array.from(cardsEl.querySelectorAll(".card"));
+    exportCardsInSequence(cards);
+  });
+
+  // OKが付いたカードのみ一括書き出し
+  document.getElementById("btn-export-checked").addEventListener("click", function() {
+    const cards = Array.from(cardsEl.querySelectorAll(".card")).filter(function(card) {
+      const cb = card.querySelector(".card-ok-check");
+      return cb && cb.checked;
+    });
+    if (cards.length === 0) {
+      alert("OK を付けたカードがありません。書き出したいイラストにチェックを入れてください。");
+      return;
+    }
+    exportCardsInSequence(cards);
+  });
+})();
+  </script>
+</body>
+</html>
